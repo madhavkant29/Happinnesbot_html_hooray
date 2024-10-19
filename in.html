@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Therapist Chatbot</title>
+    <style>
+        /* Global Settings */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #2b2828;
+            color: #878787;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #333, #444);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #444;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #e0e0e0;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #bbb;
+        }
+
+        .chatbox {
+            height: 450px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            background-color: #222;
+            position: relative;
+        }
+
+        .chat-log {
+            list-style: none;
+            padding: 0;
+        }
+
+        .chat-log li {
+            margin-bottom: 15px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .user {
+            background-color: #007bff;
+            margin-left: auto;
+            text-align: right;
+            border-top-right-radius: 0;
+            color: #fff;
+        }
+
+        .bot {
+            background-color: #555;
+            color: #fff;
+        }
+
+        /* Input Container */
+        .input-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-container input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .input-container input[type="submit"] {
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .input-container input[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        /* Chat Message Styles */
+        .user-message {
+            text-align: right;
+            color: blue;
+        }
+
+        .bot-message {
+            text-align: left;
+            color: green;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 250px;
+            height: 100%;
+            background-color: #222;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            transform: translateX(100%);
+            color: #e0e0e0;
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            margin: 0;
+        }
+
+        .sidebar-section {
+            padding: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        .sidebar-section h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #bc99d6;
+        }
+
+        .sidebar-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section ul li a {
+            color: #8b97b5;
+            text-decoration: none;
+        }
+
+        .sidebar-section ul li a:hover {
+            text-decoration: underline;
+        }
+
+        .toggle-sidebar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 14px;
+            }
+
+            .chatbox {
+                height: 350px;
+            }
+
+            .input-container input {
+                width: 70%;
+            }
+
+            .input-container button {
+                width: 25%;
+            }
+
+            .sidebar {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Therapist Chatbot</h1>
+            <p>Talk about how you're feeling, and I'll try to help. Alternatively, you can check out our resource tab</p>
+        </div>
+        <div class="chatbox" id="chatbox">
+            <div class="chat-log" id="chat-log"></div>
+            <input type="text" id="user-input" placeholder="Type your message here..." />
+            <input type="submit" value="Send" onclick="sendMessage()" />
+        </div>
+    </div>
+
+    <!-- Sidebar for resources -->
+    <div class="sidebar" id="sidebar">
+        <h2>Mindfulness Resources</h2>
+        <div class="sidebar-section">
+            <h3>Meditation Videos</h3>
+            <ul>
+                <li><a href="https://www.youtube.com/watch?v=inpok4MKVLM" target="_blank">5-Minute Meditation</a></li>
+                <li><a href="https://www.youtube.com/watch?v=ZToicYcHIOU" target="_blank">10-Minute Guided Meditation</a></li>
+                <li><a href="https://www.youtube.com/watch?v=MIr3RsUWrdo" target="_blank">Stress Relief Meditation</a></li>
+                <li><a href="https://youtu.be/H7X-qoGw6W0?si=DitGGe47Lgj7kb2b" target="_blank">Coping with Breakup: 9 Tips</a></li>
+                <li><a href="https://youtu.be/x3A8d2HDt4s?si=OLINcSwKwBRJ2tEk" target="_blank">Understanding Depression: What You Need to Know</a></li>
+                <li><a href="https://youtu.be/8OZdTwfb2Mk?si=COutXNYS_HBypsYA" target="_blank">How to Overcome Sadness After a Breakup</a></li>
+                <li><a href="https://youtu.be/6wl4j4gd2WI?si=sGjn6G1Z_Gv3EMZP" target="_blank">Meditation for Anxiety and Depression</a></li>
+                <li><a href="https://youtu.be/puoddnGTAJk?si=syAqWM2JZh4hxFk4" target="_blank">Dealing with Negative Thoughts and Emotions</a></li>
+                <li><a href="https://youtube.com/playlist?list=PLQfZk4z_wl5DaK3dXZe8jgRzIJy5aNaI0&si=S6pXLhku_HcvdNfc" target="_blank">Tales of Zen</a></li>
+                <li><a href="https://www.youtube.com/watch?v=fEGOo9ZVpns&list=PLQfZk4z_wl5DCkmPXvkl8mL_nn-mCiZ5N&pp=iAQB" target="_blank">Tales of Taoist Wisdom</a></li>
+            </ul>
+        </div>
+        <div class="sidebar-section">
+            <h3>Quotes</h3>
+            <ul>
+                <li>"You, yourself, as much as anybody in the entire universe, deserve your love and affection." – Buddha</li>
+                <li>"The best way out is always through." – Robert Frost</li>
+                <li>"Every day may not be good, but there’s something good in every day." – Alice Morse Earle</li>
+                <li>"Life isn’t about finding yourself. Life is about creating yourself." – George Bernard Shaw</li>
+                <li>"You are never too old to set another goal or to dream a new dream." – C.S. Lewis</li>
+            </ul>
+        </div>
+    </div>
+    <button class="toggle-sidebar" onclick="toggleSidebar()">Resources</button>
+
+    <script>
+        const responses = {
+            
+    "Why do I feel like this all the time?": [
+        "It could be due to unresolved emotions, past experiences, or current stress. Sometimes, our minds and bodies respond to these pressures by making us feel down or overwhelmed.",
+        "You might be going through a period of emotional turbulence, where things feel off. It’s important to reflect on any recent life changes or pressures that could be affecting your mood.",
+        "Feeling like this consistently can sometimes indicate underlying mental health challenges, like anxiety or depression. It might be helpful to explore these feelings with a therapist or counselor.",
+        "Physical health can also play a role. Lack of sleep, poor diet, or medical conditions might contribute to how you’re feeling emotionally and mentally. A check-up might give you some insights.",
+        "Sometimes, when emotions pile up or go unexpressed, they can make us feel like we're in a constant state of sadness or frustration. It’s worth taking some time to explore and address what’s been going on internally."
+    ],
+    "Is there something wrong with me?": [
+        "There’s nothing wrong with you as a person. Everyone has struggles, and feeling low or anxious is part of being human. It doesn’t define your worth or who you are.",
+        "It’s natural to feel this way when you're facing emotional difficulties. It doesn’t mean anything is fundamentally wrong with you; it just means you’re going through a tough time.",
+        "Many people feel like this when they’re struggling with their mental health, but it’s important to remember that you are not broken. What you’re experiencing is common and treatable.",
+        "Feeling like something is wrong is often a sign that your emotions need attention. Seeking support can help you better understand and manage these feelings.",
+        "You're not alone in feeling this way. It’s okay to feel uncertain or question yourself, but it doesn’t mean there’s something inherently wrong with you. It’s part of life’s ups and downs."
+    ],
+    "Will I ever feel better again?": [
+        "Yes, many people experience improvement over time, especially with the right support and treatment. Recovery is a process, and it’s okay to take it one step at a time.",
+        "It’s essential to be patient with yourself. Healing can take time, but there is hope for brighter days ahead.",
+        "You might find that over time, your perspective changes, and things start to feel more manageable. Each step you take can lead you closer to feeling better.",
+        "Consider reaching out to a therapist or counselor who can guide you through this process. Support from others can make a significant difference.",
+        "Remember, it's perfectly okay to seek help. Many people have felt this way before and have found their way to a brighter future."
+    ],
+    "Why can’t I sleep well?": [
+        "Poor sleep can result from stress, anxiety, or even lifestyle habits like excessive screen time before bed. Identifying the root cause is a good first step.",
+        "It’s not uncommon to experience sleep disturbances, especially during challenging times. Consider implementing a calming bedtime routine to help signal to your body that it's time to rest.",
+        "Sometimes, underlying health conditions or medications can interfere with sleep. If this continues, it might be worth discussing with a healthcare professional.",
+        "Practicing good sleep hygiene, such as keeping a consistent sleep schedule and creating a comfortable sleep environment, can help improve your sleep quality.",
+        "If thoughts are racing through your mind at night, consider journaling before bed to help clear your mind of any worries."
+    ],
+    "What if no one understands me?": [
+        "Feeling misunderstood can be incredibly isolating, but it’s important to remember that many people experience similar feelings. You're not alone.",
+        "It might help to find communities or support groups where you can connect with others who share similar experiences or feelings.",
+        "Sometimes, people may not understand because they haven’t gone through similar situations. This doesn’t diminish your feelings; it just reflects their perspective.",
+        "You can also try expressing your thoughts and feelings in different ways—like through art, writing, or music—to communicate your experiences more clearly.",
+        "Seeking professional support can provide a safe space to explore your feelings and help you feel understood and validated."
+    ],
+    "Why am I always anxious?": [
+        "Anxiety can stem from various factors, including genetics, past experiences, or ongoing stressors. Identifying triggers can help manage it better.",
+        "It’s common to feel anxious during uncertain times or significant life changes. It’s important to acknowledge your feelings and find ways to cope.",
+        "Practicing mindfulness or relaxation techniques can be helpful in reducing anxiety levels. Deep breathing, meditation, or yoga are great starting points.",
+        "Consider talking to someone about your anxiety, whether it's a friend, family member, or mental health professional. Sharing your experiences can be relieving.",
+        "You don’t have to face anxiety alone. There are effective treatments available, including therapy and medication, that can help you manage your symptoms."
+    ],
+    "How do I cope with sadness?": [
+        "Coping with sadness often involves allowing yourself to feel and express those emotions. It's okay to take time to grieve or feel low.",
+        "Engaging in activities that bring you joy or comfort can be a helpful distraction. Whether it’s a hobby, spending time in nature, or listening to music, find what resonates with you.",
+        "Talking about your feelings with someone you trust can help lighten the emotional load. Don't hesitate to reach out to friends or family.",
+        "Consider keeping a journal to express your feelings. Writing can be a therapeutic outlet that helps you process your emotions.",
+        "If sadness persists, reaching out to a mental health professional can provide valuable support and coping strategies tailored to your needs."
+    ],
+    "Can I change my situation?": [
+        "Change is possible, but it often takes time and effort. Reflecting on what aspects of your life you want to change can be a great starting point.",
+        "Setting small, achievable goals can help you feel a sense of progress and motivation as you work towards larger changes.",
+        "Consider seeking support from friends, family, or professionals who can provide guidance and encouragement throughout your journey.",
+        "Sometimes, external factors may be beyond your control. In these cases, focusing on what you can control, like your reactions or mindset, can be empowering.",
+        "Remember, every small step you take can lead to meaningful change. Celebrate your progress along the way, no matter how small."
+    ],
+    "Why do I feel disconnected from others?": [
+        "Feeling disconnected can arise from various factors, including personal stress, emotional challenges, or changes in relationships.",
+        "It’s common to feel isolated, especially during difficult times. Taking time to connect with friends or family, even if it's just a quick chat, can help bridge that gap.",
+        "Exploring new social activities or groups can introduce you to people who share similar interests, potentially fostering deeper connections.",
+        "Sometimes, focusing on improving your self-awareness can help you understand your feelings better and enable you to share more openly with others.",
+        "Seeking support from a therapist can also be beneficial in navigating feelings of disconnection and finding ways to reconnect with yourself and others."
+    ],
+    "How can I improve my self-esteem?": [
+        "Building self-esteem often starts with self-acceptance. Practice acknowledging your strengths and achievements, no matter how small.",
+        "Engaging in activities that you enjoy or excel at can boost your confidence and remind you of your abilities.",
+        "Surround yourself with supportive and positive people who uplift you and encourage your growth.",
+        "Consider challenging negative self-talk by reframing those thoughts into more positive and affirming statements.",
+        "Remember, self-esteem is a journey. Be patient with yourself and celebrate the progress you make along the way."
+    ],
+    
+    "Why do I feel overwhelmed?": [
+        "Feeling overwhelmed can often result from juggling multiple responsibilities or emotional stressors. Taking a step back to prioritize your tasks can help.",
+        "It’s okay to ask for help when things feel too much. Whether it's from friends, family, or professionals, support can lighten your load.",
+        "Practice grounding techniques, such as deep breathing or mindfulness exercises, to help bring your focus back to the present moment.",
+        "Breaking tasks into smaller, manageable steps can make them feel less daunting and help you regain a sense of control.",
+        "Remember, it’s perfectly normal to feel overwhelmed sometimes. Acknowledging your feelings is the first step toward finding solutions."
+    ],
+    "How do I deal with negative thoughts?": [
+        "Challenging negative thoughts can be helpful. Ask yourself if there's evidence to support those thoughts or if they’re based on assumptions.",
+        "Practice positive affirmations or gratitude journaling to shift your focus from negative to positive aspects of your life.",
+        "Engaging in activities you enjoy can provide a distraction and help improve your mood.",
+        "Consider talking to someone about your thoughts. Sharing can help lighten the emotional burden and provide a new perspective.",
+        "If negative thoughts persist, seeking support from a therapist can provide strategies to manage and reframe those thoughts effectively."
+    ],
+    "Why do I feel anxious about the future?": [
+        "It's natural to feel anxious about the unknown, especially during times of change or uncertainty. Focusing on what you can control can help alleviate some anxiety.",
+        "Consider setting short-term goals to help create a sense of direction and purpose, which can ease feelings of uncertainty.",
+        "Practicing mindfulness can help ground you in the present, reducing worries about the future. Techniques like meditation or deep breathing can be effective.",
+        "Talking about your fears with someone you trust can provide relief and help you feel less alone in your concerns.",
+        "Remember, many people share these feelings. It’s okay to seek help in managing anxiety about the future."
+    ],
+    "Why is it hard for me to trust others?": [
+        "Struggles with trust can stem from past experiences or relationships that may have caused hurt. Acknowledging these feelings is the first step toward healing.",
+        "Building trust takes time. Start by fostering small, positive interactions with others to gradually develop your trust in them.",
+        "Consider reflecting on what trust means to you and what specific qualities you need to feel secure in relationships.",
+        "Engaging in open communication with those you want to trust can help clarify intentions and foster mutual understanding.",
+        "If trust issues significantly impact your relationships, talking to a therapist can provide valuable insights and coping strategies."
+    ],
+    "How do I handle disappointment?": [
+        "Disappointment is a natural part of life. Allow yourself to feel and process those emotions rather than suppressing them.",
+        "Reflecting on what you can learn from the experience can help turn disappointment into an opportunity for growth.",
+        "Talk to someone about your feelings. Sharing your disappointment can help you feel validated and supported.",
+        "Consider reframing your expectations to focus on what you can control, which can reduce the sting of disappointment.",
+        "Remember, it’s okay to take time to heal. Be gentle with yourself as you navigate through your feelings."
+    ],
+    "Why do I feel lonely?": [
+        "Loneliness can stem from a lack of connection or meaningful relationships. Reflecting on your social interactions can help identify where to make changes.",
+        "Consider reaching out to friends or family, even if it’s just to chat or spend time together. Building connections can alleviate feelings of loneliness.",
+        "Engaging in activities or hobbies that interest you can help you meet new people and foster connections.",
+        "It’s important to remember that loneliness is a common experience. You’re not alone in feeling this way, and it’s okay to seek support.",
+        "If feelings of loneliness persist, consider speaking with a professional who can provide guidance and support in overcoming these feelings."
+    ],
+    "How can I manage stress effectively?": [
+        "Identifying the sources of your stress is crucial. Once you know what's causing it, you can develop strategies to address those stressors.",
+        "Engage in regular physical activity, which can help alleviate stress and improve your mood.",
+        "Practicing relaxation techniques, such as deep breathing, yoga, or meditation, can help calm your mind and reduce stress levels.",
+        "Consider setting aside time for self-care activities that you enjoy, whether it’s reading, drawing, or spending time in nature.",
+        "If stress becomes overwhelming, reaching out to a mental health professional can provide valuable coping strategies and support."
+    ],
+    "What should I do when I feel stuck?": [
+        "Feeling stuck can often indicate a need for change or a new perspective. Reflecting on what might be holding you back can help identify the next steps.",
+        "Consider setting small, achievable goals to create a sense of progress and motivation.",
+        "Engaging in new activities or experiences can help you break out of your routine and inspire new ideas.",
+        "Talking to someone about how you feel can provide insights and support. Sometimes, an outside perspective can help you see new possibilities.",
+        "Remember, it's okay to seek help if you feel stuck. Professionals can provide guidance and support in navigating these feelings."
+    ],
+    
+    "Why do I feel like I don’t belong anywhere?": [
+        "Feeling like you don’t belong can be a sign of searching for deeper connections. It’s okay to take your time finding people who truly understand and accept you.",
+        "Sometimes, this feeling comes from being in environments that don’t align with your values or interests. Exploring new places or activities can help.",
+        "It’s important to remember that belonging is built over time. Be patient with yourself as you seek out communities where you feel more connected.",
+        "Talking to someone about these feelings can provide reassurance and help you understand that you’re not alone in feeling this way.",
+        "Building a sense of belonging often starts with accepting yourself. Self-compassion can make it easier to find others who accept you, too."
+    ],
+    "How can I stop overthinking?": [
+        "Overthinking is a common response to stress or anxiety. Practicing mindfulness can help you stay present and reduce rumination.",
+        "Breaking tasks or concerns into smaller, manageable steps can provide clarity and reduce overthinking.",
+        "Distracting yourself with activities you enjoy can pull you out of the cycle of overthinking and give your mind a break.",
+        "Journaling can help you organize your thoughts and feelings, making them feel less overwhelming.",
+        "Consider discussing your concerns with someone you trust. Getting a different perspective can often reduce the urge to overthink."
+    ],
+    "Why am I so hard on myself?": [
+        "Being hard on yourself can stem from high expectations or perfectionism. It’s okay to acknowledge your efforts, even if things don’t go perfectly.",
+        "Self-compassion is key. Treat yourself with the same kindness and understanding that you would offer to a friend.",
+        "Reflecting on where your self-criticism comes from can help you understand and address those negative thought patterns.",
+        "Sometimes, we are our own harshest critics. Talking to someone about these feelings can help put things into perspective.",
+        "Remember, it's okay to make mistakes. They are part of learning and growing, and don’t define your worth."
+    ],
+    "How do I manage feelings of guilt?": [
+        "Acknowledge your guilt, but also recognize that everyone makes mistakes. What matters is how you move forward from them.",
+        "If possible, make amends or take responsibility for your actions. This can help relieve some of the guilt.",
+        "Reflect on whether the guilt you feel is justified or if it’s stemming from unrealistic expectations you have of yourself.",
+        "Engaging in self-forgiveness can help you move past guilt. Everyone deserves compassion, including yourself.",
+        "If guilt continues to weigh heavily on you, discussing it with a therapist or counselor can help you process and heal."
+    ],
+    "Why do I feel like I’m not good enough?": [
+        "Feeling inadequate often comes from comparing yourself to others. It’s important to remember that everyone’s journey is unique.",
+        "Focusing on your strengths and accomplishments can help shift your mindset from what you lack to what you have achieved.",
+        "Consider setting small, realistic goals that allow you to build confidence in your abilities over time.",
+        "Talking about these feelings with someone you trust can help you gain a more objective perspective.",
+        "You are enough just as you are. Self-worth is not determined by achievements or external validation."
+    ],
+    "How do I cope with rejection?": [
+        "Rejection is a natural part of life, but it doesn’t define your worth. It's okay to feel hurt, but remember, it’s just one experience among many.",
+        "Reflecting on what you can learn from the rejection can help you grow and move forward with resilience.",
+        "It can be helpful to reframe rejection as redirection—an opportunity to find something or someone that is a better fit for you.",
+        "Surround yourself with supportive people who remind you of your value, even when things don’t go as planned.",
+        "Give yourself time to heal from rejection. It’s okay to feel upset, but don’t let it stop you from trying again."
+    ],
+    "Why do I feel like I’m losing control?": [
+        "Feeling out of control can come from external stressors. Focusing on what you can control, even small things, can help ground you.",
+        "Developing a routine can provide structure and a sense of stability during chaotic times.",
+        "Engaging in mindfulness or grounding exercises can help you feel more connected to the present moment, reducing feelings of chaos.",
+        "It’s okay to ask for help. Sometimes, sharing your burden with others can help you regain a sense of control.",
+        "Remember, feeling overwhelmed is temporary. With time and support, you can regain a sense of balance."
+    ],
+    "Why am I afraid to express my emotions?": [
+        "Fear of expressing emotions often stems from past experiences where you may have felt misunderstood or judged. It’s okay to start small.",
+        "Building emotional safety with trusted people can help you feel more comfortable sharing your feelings.",
+        "Journaling can be a private way to express your emotions without fear of judgment, helping you practice opening up.",
+        "It’s important to remember that emotions are valid, and expressing them is a natural part of human experience.",
+        "If fear of expressing emotions is deeply ingrained, talking to a therapist can help you explore where that fear comes from and how to overcome it."
+    ],
+    "Why am I afraid of failure?": [
+        "Fear of failure often comes from high expectations or pressure to succeed. It’s important to remember that failure is part of growth.",
+        "Reframing failure as an opportunity to learn can help reduce the fear and make it feel less intimidating.",
+        "Consider setting realistic goals that allow room for mistakes. It’s okay to not get everything right on the first try.",
+        "Talking to someone about your fear of failure can provide support and help you put things in perspective.",
+        "Remember, no one is perfect. Failure doesn’t define you; it’s just a stepping stone on the path to success."
+    ],
+    "How do I stop comparing myself to others?": [
+        "Comparison is natural, but it can be harmful when it diminishes your self-worth. Focusing on your own journey can help shift your mindset.",
+        "Practice gratitude for what you have and who you are. This can help you appreciate your own unique strengths.",
+        "Consider limiting exposure to social media if it triggers feelings of inadequacy or comparison.",
+        "Engage in activities that make you feel good about yourself, reinforcing your own sense of worth and accomplishment.",
+        "Talking about your feelings with someone can provide reassurance and help you see that everyone’s path is different."
+    ],
+    "Why am I always tired?": [
+        "Feeling constantly tired can be due to a variety of factors, including physical health, mental health, or lifestyle habits. Reflect on your routine to see if anything needs adjustment.",
+        "Lack of sleep or poor sleep quality can contribute to tiredness. Developing a consistent sleep schedule may help improve your energy levels.",
+        "Stress and anxiety can also cause fatigue. Taking time to relax and recharge mentally can be as important as physical rest.",
+        "Physical health conditions, like anemia or thyroid issues, can lead to fatigue. If tiredness persists, it might be worth consulting a doctor.",
+        "Sometimes, emotional exhaustion can manifest as physical tiredness. Taking care of your mental health can improve your overall energy."
+    ],
+    "How do I build confidence?": [
+        "Building confidence takes time and starts with small steps. Celebrating your achievements, no matter how small, can help you feel more capable.",
+        "Practice self-affirmation by reminding yourself of your strengths and accomplishments.",
+        "Surround yourself with supportive people who uplift you and remind you of your worth.",
+        "Engaging in activities that challenge you and stepping out of your comfort zone can help build resilience and self-belief.",
+        "If low confidence is a persistent issue, talking to a therapist can provide tools to help you cultivate a more positive self-image."
+    ],
+    "Why do I struggle to make decisions?": [
+        "Decision-making can be difficult when you're feeling overwhelmed or anxious. Breaking decisions into smaller steps can make them feel more manageable.",
+        "Consider listing the pros and cons of each option to gain clarity and confidence in your choice.",
+        "Sometimes, indecision comes from a fear of making the wrong choice. It's important to remember that no decision is perfect, and it's okay to make mistakes.",
+        "Talking through your options with someone you trust can provide new perspectives and help you feel more confident in your decision-making.",
+        "Remember, you don't have to have everything figured out. It's okay to take your time and trust your intuition."
+    ],
+    "How do I cope with change?": [
+        "Change can be unsettling, but it’s a natural part of life. Focusing on the positives and opportunities in a new situation can help ease the transition.",
+        "Developing a routine during times of change can provide stability and comfort as you adjust.",
+        "Talking about your feelings regarding change with someone can help you process and adapt more smoothly.",
+        "It's okay to take things one step at a time. You don't have to have everything figured out immediately when facing change.",
+        "Remember, change often brings growth and new opportunities, even if it feels uncomfortable at first."
+    ],
+    "Why do I avoid confrontation?": [
+        "Avoiding confrontation can stem from a fear of conflict or upsetting others. It's okay to start practicing assertiveness in small, non-threatening situations.",
+        "Remember, confrontation doesn’t have to be negative. It can be a healthy way to express your feelings and needs.",
+        "Talking to someone about why you avoid confrontation can provide insights into your communication style and help you feel more confident in addressing issues.",
+        "It’s important to set boundaries and stand up for yourself, even if confrontation feels uncomfortable.",
+        "If avoiding confrontation is a long-standing issue, working with a therapist can help you build assertiveness and communication skills."
+    ],
+    "Why do I feel unmotivated?": [
+        "Lack of motivation can result from burnout, stress, or feeling overwhelmed. Taking a break to recharge may help renew your energy.",
+        "Setting small, achievable goals can provide a sense of accomplishment and help you build momentum.",
+        "Engaging in activities you enjoy can help spark motivation and make tasks feel more manageable.",
+        "Talking about your lack of motivation with someone can provide support and help you gain new perspectives on your goals.",
+        "If unmotivation persists, consider speaking with a professional to explore underlying factors and get help in reigniting your motivation."
+    ]
+}
+
+
+
+
+
+
+        
+
+let memory = []; // Array to store conversation history
+
+function appendMessage(sender, message) {
+    const chatLog = document.getElementById('chat-log');
+    const newMessage = document.createElement('li');
+    newMessage.className = sender;
+    newMessage.innerHTML = '<div class="message ' + sender + '">' + message + '</div>';
+    chatLog.appendChild(newMessage);
+    chatLog.scrollTop = chatLog.scrollHeight; // Scroll to the bottom
+}
+
+function sendMessage() {
+    const userInput = document.getElementById('user-input');
+    const userText = userInput.value;
+
+    if (userText === "") {
+        return; // Prevent sending empty messages
+    }
+
+    appendMessage('user', userText);
+    memory.push({ sender: 'user', message: userText }); // Save user input in memory
+    userInput.value = ""; // Clear input
+
+    const botResponse = getResponse(userText);
+    appendMessage('bot', botResponse);
+    memory.push({ sender: 'bot', message: botResponse }); // Save bot response in memory
+}
+
+function getResponse(userInput) {
+    // Reference conversation history for context-based responses (simple example)
+    if (memory.length > 0) {
+        const lastUserMessage = memory[memory.length - 2]?.message || '';
+        if (lastUserMessage.includes('sad') && userInput.includes('better')) {
+            return "It’s okay to feel this way, and it will get better in time.";
+        }
+    }
+
+    return responses[userInput] 
+        ? responses[userInput][Math.floor(Math.random() * responses[userInput].length)] 
+        : "I'm sorry, I don't understand that.";
+}
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('active');
+}
+
+    </script>
+</body>
+</html>
